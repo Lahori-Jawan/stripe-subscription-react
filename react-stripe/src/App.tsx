@@ -1,5 +1,6 @@
 import "./App.css";
-import StripeSubscriptions from "./components/Subscriptions";
+// import OneTimePay from "./components/OneTimePay";
+import Subscription from "./components/Subscriptions";
 
 function App() {
   return (
@@ -8,7 +9,8 @@ function App() {
         <h3>
           Stripe Payment i.e. <code>One time</code>, <code>Subscription</code>
         </h3>
-        <StripeSubscriptions />
+        {/* <OneTimePay /> */}
+        <Subscription />
       </div>
     </>
   );

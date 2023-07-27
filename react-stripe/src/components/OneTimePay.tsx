@@ -1,17 +1,18 @@
+// https://www.youtube.com/watch?v=e-whXipfRvg
 import {
   Elements,
   PaymentElement,
-  CardElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
 import { Stripe, loadStripe } from "@stripe/stripe-js";
 import { useEffect, useState } from "react";
 
-const Subscription = () => {
+const OneTimePay = () => {
   const [stripePromise, setStripePromise] = useState<Stripe | null>(null);
-  const userEmail = "nasir@user.com";
-  const [clientSecret, setClientSecret] = useState("");
+  const [clientSecret, setClientSecret] = useState(null);
+
+  useEffect(() => {}, []);
 
   useEffect(() => {
     const loadStripeKey = async () => {
@@ -24,11 +25,11 @@ const Subscription = () => {
 
     loadStripeKey();
 
-    fetch("http://localhost:8000/subscribe", {
+    fetch("http://localhost:8000/pay", {
       method: "POST",
-      body: JSON.stringify({ email: userEmail }),
+      body: JSON.stringify({}),
     }).then(async (resp) => {
-      const { clientSecret, status } = await resp.json();
+      const { clientSecret } = await resp.json();
 
       setClientSecret(clientSecret);
     });
@@ -69,7 +70,7 @@ function CheckoutForm() {
 
     if (error) {
       setMessage(error.message);
-    } else if (paymentIntent.status === "succeeded") {
+    } else if (paymentIntent?.status === "succeeded") {
       setMessage("Payment status: " + paymentIntent.status);
     } else {
       setMessage("Unexpected state");
@@ -79,30 +80,51 @@ function CheckoutForm() {
   };
 
   return (
-    <form
+    <div
       style={{
-        display: "block",
-        width: "100%",
+        padding: "3rem",
       }}
-      onSubmit={handleForm}
     >
-      <div>
-        <PaymentElement
-          className="card"
-          options={{
-            fields: {
-              billingDetails: { name: "auto", email: "auto", address: "auto" },
-            },
+      <div
+        style={{
+          maxWidth: "500px",
+          margin: "0 auto",
+        }}
+      >
+        <form
+          style={{
+            display: "block",
+            width: "100%",
           }}
-        />
-        <button className="pay-button" disabled={isPaymentProcessing}>
-          {isPaymentProcessing ? "Loading..." : "Pay"}
-        </button>
+          onSubmit={handleForm}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <PaymentElement
+              className="card"
+              // options={{
+              //   style: {
+              //     base: {
+              //       backgroundColor: "white",
+              //     },
+              //   },
+              // }}
+            />
+            <button className="pay-button" disabled={isPaymentProcessing}>
+              {isPaymentProcessing ? "Loading..." : "Pay"}
+            </button>
 
-        {message && <span id="payment-message">{message}</span>}
+            {message && <span id="payment-message">{message}</span>}
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
 
-export default Subscription;
+export default OneTimePay;

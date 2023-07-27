@@ -6,7 +6,7 @@ const stripe = require("stripe")(
   "sk_test_51NXewiDUtY4bydyAh46169Q7QhwWjjitSVqbpwITCZlAajmxYVfiFnXGy7gAIOJ9kFad4nrsWCjdSkysnya7Ltxp00gHZYPRB7"
 );
 // acct_1NXewiDUtY4bydyA
-const port = 3000;
+const port = 8000;
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -36,37 +36,46 @@ app.post("/pay", async (req, res) => {
   res.json({ clientSecret: paymentIntent.client_secret });
 });
 
-app.post("/sub", async (req, res) => {
-  const { email, payment_method } = req.body;
+app.post("/subscribe", async (req, res) => {
+  const { email } = req.body;
 
-  const customer = await createUser(email);
-
+  const customer = await findOrCreateUser(email);
+  const priceId = "price_1NXfPHDUtY4bydyA4coy5sBu"; // Influencer Product
+  console.log({ priceId, customer });
   const subscription = await stripe.subscriptions.create({
     customer: customer.id,
-    items: [{ plan: "plan_G......" }],
+    // items: [{ plan: "plan_G......" }],
+    items: [
+      {
+        price: priceId,
+      },
+    ],
+    payment_behavior: "default_incomplete",
     expand: ["latest_invoice.payment_intent"],
   });
 
-  const status = subscription["latest_invoice"]["payment_intent"]["status"];
+  const status = subscription.latest_invoice.payment_intent.status;
   const client_secret =
     subscription["latest_invoice"]["payment_intent"]["client_secret"];
-
-  res.json({ client_secret: client_secret, status: status });
+  console.log({ status, client_secret });
+  res.json({
+    clientSecret: client_secret,
+    status: status,
+  });
 });
 
-async function createUser(email) {
-  const user = await stripe.customers.list({ email });
-  console.log("create user", user);
-  if (user) return user;
+async function findOrCreateUser(email) {
+  const { data = [] } = await stripe.customers.list({ email });
+
+  if (data.length > 0) return data[0];
 
   const customer = await stripe.customers.create({
-    payment_method: payment_method,
+    // payment_method: payment_method,
     email: email,
-    invoice_settings: {
-      default_payment_method: payment_method,
-    },
+    // invoice_settings: {
+    //   default_payment_method: payment_method,
+    // },
   });
-  console.log("create customer", customer);
 
   return customer;
 }
