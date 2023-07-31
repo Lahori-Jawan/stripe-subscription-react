@@ -1,17 +1,33 @@
 import {
   Elements,
   PaymentElement,
-  CardElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
 import { Stripe, loadStripe } from "@stripe/stripe-js";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { useEffect, useState } from "react";
 
+function useSubscription(email: string) {
+  return useQuery({
+    queryKey: ["subscription"],
+    // queryFn: async () => axios.post("http://localhost:8000/subscribe", {
+    //   email: userEmail,
+    // }),
+    queryFn: async () => {
+      const { data } = await axios.post("http://localhost:8000/subscribe", {
+        email,
+      });
+      return data;
+    },
+  });
+}
 const Subscription = () => {
   const [stripePromise, setStripePromise] = useState<Stripe | null>(null);
   const userEmail = "nasir@user.com";
-  const [clientSecret, setClientSecret] = useState("");
+  // let clientSecret = null;
+  // const [clientSecret, setClientSecret] = useState("");
 
   useEffect(() => {
     const loadStripeKey = async () => {
@@ -24,15 +40,25 @@ const Subscription = () => {
 
     loadStripeKey();
 
-    fetch("http://localhost:8000/subscribe", {
-      method: "POST",
-      body: JSON.stringify({ email: userEmail }),
-    }).then(async (resp) => {
-      const { clientSecret, status } = await resp.json();
+    // fetch("http://localhost:8000/subscribe", {
+    //   method: "POST",
+    //   body: JSON.stringify({ email: userEmail }),
+    // }).then(async (resp) => {
+    //   const { clientSecret } = await resp.json();
 
-      setClientSecret(clientSecret);
-    });
+    //   setClientSecret(clientSecret);
+    // });
   }, []);
+
+  const { status, data = {}, error, isFetching } = useSubscription(userEmail);
+  console.log({ status, data, error, isFetching });
+  // if (status === "success") {
+  //   const { clientSecret: cs } = data;
+  //   // setClientSecret(clientSecret);
+  //   clientSecret = cs;
+  // }
+
+  const { clientSecret } = data;
 
   return (
     <>
